@@ -1,4 +1,6 @@
 import Seq_data
+import warnings
+
 
 class Seq:
     '''
@@ -58,17 +60,26 @@ class Seq:
                 type(other) == str
 
 
-    def _map(self, mapper, seqclass=None):
+    def _map(self, mapper, seqclass=None, window=1):
         '''
         The generic map function for all sequence mapping, allows for a robust abstract method
         for all variations of mapping (mapper), and the return sequence subclass (seqclass).
 
-        Examples of mapping includes complement, transcription, and translation.
+        Examples of mapping include complement, transcription, and translation.
         '''
         if not seqclass:
             seqclass = self.__class__
         try:
-            new_seq = ''.join([mapper[base] for base in self._seq])
+            if window > 1:
+                groups = [self._seq[i:i+window] for i in range(0, len(self._seq), window)]
+                filtered = list(filter(lambda ele: len(ele) == window, groups))
+                if len(groups) != len(filtered):
+                    warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}\n'
+                    warnings.warn(f'Some elements do not fit window={window} and are ignored.')
+                mapped = [mapper[group] for group in filtered]
+            else:
+                mapped = [mapper[ele] for ele in self._seq]
+            new_seq = ''.join(mapped)
             return seqclass(new_seq)
         except KeyError:
             raise KeyError('The provided mapper does not contain some bases in the sequence.')
@@ -213,9 +224,17 @@ class DNA(AbstractNucleotide):
 
     def rc(self, mapper=Seq_data.default_complement_dna):
         return self.reverse_complement(mapper)
+    
+
+    def translate(self):
+        return self.transcribe().translate()
 
 
 class RNA(AbstractNucleotide):
+    ''' 
+    RNA is the intended concrete class for all analysis using RNA sequences.
+    '''
+
     def __init__(self, seq, valid_checker=Seq_data.valid_rna):
         super().__init__(seq, valid_checker)
 
@@ -242,3 +261,13 @@ class RNA(AbstractNucleotide):
 
     def rc(self, mapper=Seq_data.default_complement_rna):
         return self.reverse_complement(mapper)
+    
+    def translate(self, mapper=Seq_data.default_translate):
+        return super()._map(mapper, Protein, 3)
+
+
+class Protein(Seq):
+    '''
+    Protein sequence
+    '''
+
