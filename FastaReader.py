@@ -1,8 +1,10 @@
 from Seq import *
 
 class FastaReader:
+    _classes = {'Seq': Seq, 'DNA': DNA, 'RNA': RNA, 'Protein': Protein}
+
     def __init__(self, filename, seq_type='Seq'):
-        if not filename.endswith('.fasta') or seq_type not in ['Seq', 'DNA', 'RNA']:
+        if not filename.endswith('.fasta') or seq_type not in FastaReader._classes.keys():
             raise ValueError("Invalid input")
 
         self._sequences = []
@@ -14,12 +16,7 @@ class FastaReader:
                 line = line.rstrip('\n')
                 if line.startswith('>'):
                     if seq:
-                        if seq_type == 'Seq':
-                            self._sequences.append((header, Seq(seq)))
-                        elif seq_type == 'DNA':
-                            self._sequences.append((header, DNA(seq)))
-                        elif seq_type == 'RNA':
-                            self._sequences.append((header, RNA(seq)))
+                        self._sequences.append((header, FastaReader._classes[seq_type](seq)))
                         seq = ''
                         header = line
                     else:
@@ -27,12 +24,7 @@ class FastaReader:
                 else:
                     seq += line
                 line = f.readline()
-            if seq_type == 'Seq':
-                self._sequences.append((header, Seq(seq)))
-            elif seq_type == 'DNA':
-                self._sequences.append((header, DNA(seq)))
-            elif seq_type == 'RNA':
-                self._sequences.append((header, RNA(seq)))
+            self._sequences.append((header, FastaReader._classes[seq_type](seq)))
 
     def __repr__(self):
         return repr(self._sequences)
@@ -42,3 +34,8 @@ class FastaReader:
     
     def __getitem__(self, other):
         return self._sequences[other]
+
+
+class FastaObject:
+    def __init__(self, string):
+        

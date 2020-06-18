@@ -2,50 +2,32 @@ import Seq_data
 import warnings
 
 
-class Seq:
+class Seq(str):
     '''
-    Seq (Sequence) is an abstract Python string wrapper class with added
-    functionality for biological sequences such as nucleotides and peptides.
+    Seq (Sequence) is an abstract subclass of string with added
+    functionality for biological sequences. The Seq class is not
+    intended to be instantiated, and it is recommended for users
+    to work with concrete classes like DNA, RNA, Protein.
+
+    >>> string = "ATGC"
+    >>> Seq(string)
+    Seq(ATGC)
     '''
 
     def __init__(self, seq):
-        self._seq = seq.upper()
+        self = seq.upper()
 
 
     def __repr__(self):
         LIMIT = 21
-        if len(self._seq) > LIMIT:
-            return f'{self.__class__.__name__}({self._seq[:LIMIT]}...{self._seq[-3:]})'
-        return f'{self.__class__.__name__}({self._seq})'
-
-
-    def __str__(self):
-        return self._seq
-
-
-    def __add__(self, other):
-        return self.__class__(self._seq + other._seq)
-
-
-    def __mul__(self, other):
-        return self.__class__(self._seq * other)
-
-
-    def __contains__(self, item):
-        return item in self._seq
-
-
-    def __len__(self):
-        return len(self._seq)
-
-
-    def __getitem__(self, key):
-        return self.__class__(self._seq[key])
+        if len(self) > LIMIT:
+            return f'{self.__class__.__name__}({self[:LIMIT]}...{self[-3:]})'
+        return f'{self.__class__.__name__}({self})'
 
 
     def __eq__(self, other):
         if self.__class__ == other.__class__:
-            return self._seq == other._seq
+            return str(self) == str(other)
         else:
             return False
 
@@ -62,23 +44,22 @@ class Seq:
 
     def _map(self, mapper, seqclass=None, window=1):
         '''
-        The generic map function for all sequence mapping, allows for a robust abstract method
-        for all variations of mapping (mapper), and the return sequence subclass (seqclass).
-
-        Examples of mapping include complement, transcription, and translation.
+        The generic map function for all sequence mapping, allows for a 
+        robust abstract method for all variations of mapping (mapper), 
+        and the return sequence subclass (seqclass).
         '''
         if not seqclass:
             seqclass = self.__class__
         try:
             if window > 1:
-                groups = [self._seq[i:i+window] for i in range(0, len(self._seq), window)]
+                groups = [self[i:i+window] for i in range(0, len(self), window)]
                 filtered = list(filter(lambda ele: len(ele) == window, groups))
                 if len(groups) != len(filtered):
                     warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}\n'
                     warnings.warn(f'Some elements do not fit window={window} and are ignored.')
                 mapped = [mapper[group] for group in filtered]
             else:
-                mapped = [mapper[ele] for ele in self._seq]
+                mapped = [mapper[ele] for ele in self]
             new_seq = ''.join(mapped)
             return seqclass(new_seq)
         except KeyError:
@@ -86,13 +67,13 @@ class Seq:
     
 
     def reverse(self):
-        return self.__class__(self._seq[::-1])
+        return self.__class__(self[::-1])
     
 
     def count(self, pattern):
         if not self._class_check(pattern):
             raise TypeError('Invalid input type')
-        return self._seq.count(str(pattern))
+        return self.count(str(pattern))
 
 
     def count_overlap(self, pattern):
@@ -102,7 +83,7 @@ class Seq:
         pattern = str(pattern)
         count = start = 0
         while True:
-            start = self._seq.find(pattern, start) + 1
+            start = self.find(pattern, start) + 1
             if start > 0:
                 count += 1
             else:
@@ -111,19 +92,21 @@ class Seq:
 
 class AbstractNucleotide(Seq):
     '''
-    AbstractNucleotide is the abstract class for nucleotide sequences including DNA and RNA.
-    It has parent functions for finding complements, generating reading frames and codons.
+    AbstractNucleotide is the abstract class for nucleotide sequences 
+    including DNA and RNA. It has parent functions for finding complements, 
+    generating reading frames and codons.
     '''
 
     def __init__(self, seq, valid_checker):
         '''
-        Each nucleotide type has a set of valid bases in the valid_checker argument.
-        Most subclasses of AbstractNucleotide have their own default sets;
+        Each nucleotide type has a set of valid bases in the 
+        valid_checker argument. Most subclasses of AbstractNucleotide 
+        have their own default sets;
         e.g. {A, T, G, C, N} for DNA and {A, U, G, C, N} for RNA.
 
         Users can also insert their own set if desired.
-  
         '''
+
         for base in seq:
             if base not in valid_checker:
                 raise ValueError('Invalid sequence')       
@@ -131,6 +114,10 @@ class AbstractNucleotide(Seq):
 
 
     def complement(self, mapper):
+        '''
+        Returns complementary sequence
+        '''
+
         seq = ''.join([mapper[b] for b in self._seq])
         return self.__class__(seq)
 
@@ -152,18 +139,31 @@ class AbstractNucleotide(Seq):
         return round(val, 2)
     
 
-    def codons(self, keep_class=False):
+    def kmers(self, k):
+        '''
+        Returns a list of all k-mers, subsequence of nucleotide of length k.
+
+        >>> DNA('CAATCCAAC').get_kmer(5)
+        ['CAATC', 'AATCC', 'ATCCA', 'TCCAA', 'CCAAC']
+
+        '''
+        
+        res = [self[i: i+k] for i in range(len(self)-k+1)]
+        return res
+
+
+    def codons(self):
         '''
         A codon is a nucleotide with 3 bases, read during translation event.
         Returns a tuple of codon strings by default, else a tuple of codon nucleotides.
 
         >>> DNA("AGGCCTGGGGTTTAATTAGCGTAGCGTTTACGATAT").codons()
-        ('AGG', 'CCT', 'GGG', 'GTT', 'TAA', 'TTA', 'GCG', 'TAG', 'CGT', 'TTA', 'CGA', 'TAT')
+        ['AGG', 'CCT', 'GGG', 'GTT', 'TAA', 'TTA', 'GCG', 'TAG', 'CGT', 'TTA', 'CGA', 'TAT']
 
         '''
         
-        res = map(''.join, zip(*[iter(self._seq)] * 3))
-        return tuple(map(lambda c: self.__class__(c), res)) if keep_class else tuple(res)
+        res = map(''.join, zip(*[iter(self)] * 3))
+        return list(res)
     
 
     def frames(self, complete=False):
@@ -178,7 +178,7 @@ class AbstractNucleotide(Seq):
         {1: DNA(AATTGGCCGCTTAAT), 2: DNA(ATTGGCCGCTTAAT), 3: DNA(TTGGCCGCTTAAT)}
         >>> dna.frames(complete=True)
         {1: DNA(AATTGGCCGCTTAAT), 2: DNA(ATTGGCCGCTTAAT), 3: DNA(TTGGCCGCTTAAT), 
-            -1: DNA(TTAACCGGCGAATTA), -2: DNA(TAACCGGCGAATTA), -3: DNA(AACCGGCGAATTA)}
+        -1: DNA(TTAACCGGCGAATTA), -2: DNA(TAACCGGCGAATTA), -3: DNA(AACCGGCGAATTA)}
         
         '''
 
@@ -190,7 +190,7 @@ class AbstractNucleotide(Seq):
                 else:
                     result[frame] = self[(frame - 1):]
         return result
-
+    
 
 class DNA(AbstractNucleotide):
     '''
@@ -262,6 +262,7 @@ class RNA(AbstractNucleotide):
     def rc(self, mapper=Seq_data.default_complement_rna):
         return self.reverse_complement(mapper)
     
+
     def translate(self, mapper=Seq_data.default_translate):
         return super()._map(mapper, Protein, 3)
 
@@ -270,4 +271,4 @@ class Protein(Seq):
     '''
     Protein sequence
     '''
-
+    pass
