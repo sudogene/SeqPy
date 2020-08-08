@@ -271,4 +271,10 @@ class Protein(Seq):
     '''
     Protein sequence
     '''
-    pass
+    def __init__(self, seq, valid_checker=Seq_data.valid_protein):
+        for base in seq:
+            if base not in valid_checker:
+                raise ValueError('Invalid sequence')       
+        super().__init__(seq)
+    
+

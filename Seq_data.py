@@ -12,7 +12,8 @@ valid_rna = {'A', 'U', 'G', 'C', 'N'}
 
 valid_protein = {
     'A', 'R', 'N', 'D', 'C', 'G', 'Q', 'E', 'H', 'I',
-    'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'
+    'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V',
+    '*'
 }
 
 default_translate = {
