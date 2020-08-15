@@ -1,6 +1,3 @@
 *.txt
 *.fasta
-./fyp-files/*.txt
-./fyp-files/*.fasta
-./fyp-files/*.py
-
+fyp-files/*
