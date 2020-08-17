@@ -1,3 +1,5 @@
 *.txt
 *.fasta
 fyp-files/*
+.DS_Store
+__pycache__/*
