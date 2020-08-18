@@ -18,9 +18,9 @@ class Seq:
         self.seq = seq
 
     def __repr__(self):
-        LIMIT = 21
-        if len(self.seq) > LIMIT:
-            return f'{self.__class__.__name__}({self.seq[:LIMIT]}...{self.seq[-3:]})'
+        limit = 21
+        if len(self.seq) > limit:
+            return f'{self.__class__.__name__}({self.seq[:limit]}...{self.seq[-3:]})'
         return f'{self.__class__.__name__}({self.seq})'
 
     def __str__(self):
@@ -34,6 +34,23 @@ class Seq:
 
     def __getitem__(self, i):
         return self.__class__(self.seq.__getitem__(i))
+
+    def __contains__(self, item):
+        return self.seq.__contains__(str(item))
+
+    def __add__(self, other):
+        if not self._class_check(other):
+            raise TypeError(f'unsupported operand type for {other.__class__.__name__}')
+        return self.__class__(self.seq + str(other))
+    
+    def __mul__(self, n: int):
+        return self.__class__(self.seq.__mul__(n))
+
+    def __sub__(self, other):
+        if not self._class_check(other):
+            raise TypeError(f'unsupported operand type for {other.__class__.__name__}')
+        new_seq = self.seq.replace(str(other), '')
+        return self.__class__(new_seq)
 
     def __len__(self):
         return self.seq.__len__()
@@ -64,26 +81,26 @@ class Seq:
                 filtered = list(filter(lambda ele: len(ele) == window, groups))
                 if len(groups) != len(filtered):
                     warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}\n'
-                    warnings.warn(f'Some elements do not fit window={window} and are ignored.')
+                    warnings.warn(f'some elements do not fit window={window} and are ignored.')
                 mapped = [mapper[group] for group in filtered]
             else:
                 mapped = [mapper[ele] for ele in self.seq]
             new_seq = ''.join(mapped)
             return seqclass(new_seq)
         except KeyError:
-            raise KeyError('The provided mapper does not contain some bases in the sequence.')
+            raise KeyError('the provided mapper does not contain some bases in the sequence.')
 
     def reverse(self):
         return self.__class__(self.seq[::-1])
 
     def count(self, pattern):
         if not self._class_check(pattern):
-            raise TypeError('Invalid input type')
+            raise TypeError('invalid input type')
         return self.seq.count(str(pattern))
 
     def count_overlap(self, pattern):
         if not self._class_check(pattern):
-            raise TypeError('Invalid input type')
+            raise TypeError('invalid input type')
 
         pattern = str(pattern)
         count = start = 0
@@ -116,7 +133,7 @@ class AbstractNucleotide(Seq):
         """
 
         if not set(seq).issubset(valid_checker):
-            raise ValueError('Invalid sequence')
+            raise ValueError('invalid sequence')
         super().__init__(seq)
         self.mapper = mapper
 
@@ -244,5 +261,5 @@ class Protein(Seq):
 
     def __init__(self, seq, valid_checker=sd.valid_protein):
         if not set(seq).issubset(valid_checker):
-            raise ValueError('Invalid sequence')
+            raise ValueError('invalid sequence')
         super().__init__(seq)
