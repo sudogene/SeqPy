@@ -14,7 +14,7 @@ class FastaReader:
     def __init__(self, filename, seq_type='Seq'):
         if filename.split('.')[-1] not in self._extensions or \
                 seq_type not in self._classes.keys():
-            raise ValueError("Invalid input")
+            raise ValueError("invalid input")
 
         self._sequences = []
         with open(filename, 'r') as f:
@@ -25,7 +25,7 @@ class FastaReader:
                 line = line.rstrip('\n')
                 if line.startswith('>'):
                     if seq:
-                        fo = FastaRecord(header, self._classes[seq_type](seq))
+                        fo = FastaRecord(header, self._classes[seq_type](seq.upper()))
 
                         self._sequences.append(fo)
                         seq = ''
@@ -35,7 +35,7 @@ class FastaReader:
                 else:
                     seq += line
                 line = f.readline()
-            fo = FastaRecord(header, self._classes[seq_type](seq))
+            fo = FastaRecord(header, self._classes[seq_type](seq.upper()))
             self._sequences.append(fo)
 
     def __repr__(self):
