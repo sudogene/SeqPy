@@ -26,6 +26,15 @@ class FastaRecord:
 
     @classmethod
     def read_fasta(cls, filename: str, seq_type="Seq"):
+        """
+        Reads from fasta formatted files and create
+        FastaRecord object. Currently this only works
+        for one fasta record per file. If an input file
+        has more than one record, only the last one will
+        be turned into a FastaRecord.
+
+        >>> record = FastaRecord.read_fasta("sequence.fasta", "DNA")
+        """
         if filename.split('.')[-1] not in cls._extensions or \
                 seq_type not in cls._classes.keys():
             raise ValueError("invalid input")
@@ -60,7 +69,7 @@ class FastaRecord:
         try:
             return self.desc[k]
         except KeyError:
-            raise KeyError("Call keys() for valid keys")
+            raise KeyError("call keys() for valid keys")
 
     def keys(self):
         return self.desc.keys()
