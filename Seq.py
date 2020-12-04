@@ -1,5 +1,6 @@
 import seq_data as sd
 import warnings
+import re
 
 
 class Seq:
@@ -203,7 +204,7 @@ class AbstractNucleotide(Seq):
             if frame < 0:
                 result[frame] = self.c()[((frame * -1) - 1):]
             else:
-                result[frame] = self.seq[(frame - 1):]
+                result[frame] = self.__class__(self.seq[(frame - 1):])
         return result
 
 
@@ -230,6 +231,13 @@ class DNA(AbstractNucleotide):
 
     def translate(self):
         return self.transcribe().translate()
+
+    def tm(self):
+        A = self.count("A")
+        C = self.count("C")
+        T = self.count("T")
+        G = self.count("G")
+        return (4 * (G + C)) + (2 * (A + T))
 
     def overlap(self, other):
         # TODO
